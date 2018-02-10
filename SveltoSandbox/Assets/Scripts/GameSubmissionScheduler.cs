@@ -1,12 +1,12 @@
 ﻿using Kore.Coroutines;
-using Kore.Utils;
+using Svelto.ECS.Schedulers;
 using Svelto.WeakEvents;
 using System.Collections;
 
 namespace Game
 {
     /// <summary>
-    /// Interface for a submission scheduler
+    /// My game can work with any Submission scheduler that implement this interface
     /// </summary>
     public interface ISubmissionScheduler
     {
@@ -20,46 +20,22 @@ namespace Game
     }
 
     /// <summary>
-    /// Scheduler implementing the interface, we make it a singleton through interface, same
-    /// as <see cref="UnitySumbmissionEntityViewScheduler"/>
+    /// This class is an adapter, it takes my <see cref="ISubmissionScheduler"/> scheduler and adapt it
+    /// to work inside Svelto.ECS because this class implements <see cref="EntitySubmissionScheduler"/>
     /// </summary>
-    public class EntitySubmissionScheduler : SceneScopedSingletonI< EntitySubmissionScheduler, ISubmissionScheduler>, ISubmissionScheduler
+    public class GameSubmissionScheduler : EntitySubmissionScheduler
     {
-        public IEnumerator ScheduleTask()
+        private readonly ISubmissionScheduler scheduler;
+
+        public GameSubmissionScheduler( ISubmissionScheduler scheduler)
         {
-            while (true)
-            {
-                yield return null;
-
-                if (OnTick!= null && OnTick.IsValid)
-                    OnTick.Invoke();
-
-                if(OnTick!=null && !OnTick.IsValid)
-                    yield break;
-            }
-        }
-
-        public void Schedule( WeakAction submitEntityViews)
-        {
-            OnTick = submitEntityViews;
-        }
-
-        private WeakAction OnTick;
-    }
-
-    /// <summary>
-    /// Concrete class implementing the svelto <see cref="Svelto.ECS.Schedulers.EntitySubmissionScheduler"/> running the task
-    /// </summary>
-    public class GameSubmissionScheduler : Svelto.ECS.Schedulers.EntitySubmissionScheduler
-    {
-        public GameSubmissionScheduler()
-        {
-            Koroutine.Run( EntitySubmissionScheduler.Instance.ScheduleTask(), Method.LateUpdate);
+            this.scheduler = scheduler;
+            Koroutine.Run( scheduler.ScheduleTask(), Method.LateUpdate); //be sure this is the last thing executed in a frame
         }
 
         public override void Schedule( WeakAction callback)
         {
-            EntitySubmissionScheduler.Instance.Schedule( callback);
+            scheduler.Schedule( callback);
         }
     }
 }

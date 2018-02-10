@@ -1,5 +1,4 @@
 ﻿using Game.ECS.Components.Lifter;
-using Svelto.ECS;
 
 /// <summary>
 /// Liftable components are all those components that can move freely in the space or can

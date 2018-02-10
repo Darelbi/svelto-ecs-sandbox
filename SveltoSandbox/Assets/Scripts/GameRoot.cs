@@ -1,24 +1,23 @@
-﻿using Game.ECS.Engines.Lifter;
-using Kore.Coroutines;
+﻿using Kore.Coroutines;
 using Svelto.ECS;
+using Svelto.ECS.Schedulers;
 using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Game namespace, for reference on the composition root see the vanilla example:
-/// https://github.com/sebas77/Svelto.ECS.Examples.Vanilla/blob/master/Svelto.ECS.Example/src/Svelto-ECS-Simplest-Example-Ever/Example/MainContextSimple.cs
+/// Because using namespaces in a nice way is good
 /// </summary>
 namespace Game
 {
     /// <summary>
-    /// We just need on of theese in scene to start the game
+    /// The GameRoot creates the game context and run the game task.
     /// </summary>
     public class GameRoot : MonoBehaviour
     {
         private readonly GameContext game;
 
         /// <summary>
-        /// Create the game context
+        /// Create the game context.
         /// </summary>
         public GameRoot()
         {
@@ -35,34 +34,43 @@ namespace Game
     }
 
     /// <summary>
-    /// Class holding the game logic, not static to allow using some variables inside
+    /// Setup the ECS framework and keep alive it
     /// </summary>
     public class GameContext
     {
         /// <summary>
-        /// The task to be runned
+        /// Game Task, the IEnumerator keeps the variables alive thanks to the Koroutine manager.
         /// </summary>
         /// <returns></returns>
         public IEnumerator Task()
         {
-            SetupGame();
+            var enginesRoot = new EnginesRoot( GenerateMySubmissionScheduler());
+
+            SetupEngines( enginesRoot);
 
             while (true)
                 yield return null;
         }
 
         /// <summary>
+        /// Submission scheduler, it has to be game-specific, here's mine copied from Svelto.
+        /// </summary>
+        private EntitySubmissionScheduler GenerateMySubmissionScheduler()
+        {
+            return new GameSubmissionScheduler(
+                (ISubmissionScheduler) StaticSubmissionScheduler.Instance );
+        }
+
+
+        /// <summary>
         /// Wire all the game logic and setup the engines
         /// </summary>
-        private void SetupGame()
+        private void SetupEngines( EnginesRoot ecs)
         {
-            var scheduler = new GameSubmissionScheduler();
-            var root = new EnginesRoot( scheduler);
+            IEntityFactory entityFactory = ecs.GenerateEntityFactory();
+            IEntityFunctions entityFunctions = ecs.GenerateEntityFunctions();
 
-            IEntityFactory entityFactory = root.GenerateEntityFactory();
-            IEntityFunctions entityFunctions = root.GenerateEntityFunctions();
-
-            root.AddEngine( new LitferCollectionEngine( entityFunctions));
+            //ecs.AddEngine( new Engine(blabla));
         }
     }
 }
