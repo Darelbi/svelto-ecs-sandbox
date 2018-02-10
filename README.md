@@ -32,6 +32,13 @@ Me:
 
 [My repositories](https://github.com/Darelbi?tab=repositories)
 
+Personal note, since I use often throw-away strong passwords, I keep this memo on how to allow SourceTree asking me again
+the pw:
+
+remove passwd file from:
+ C:\Users\USERNAME\AppData\Local\Atlassian\SourceTree 
+ start source tree
+
 Svelto ECS author:
 
 [Svelto ECS' author](https://github.com/sebas77?tab=repositories)
