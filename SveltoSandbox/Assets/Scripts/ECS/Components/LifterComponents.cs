@@ -18,12 +18,12 @@ namespace Game.ECS.Components.Lifter
         /// First index is the Id of the liftable, second index is the if of the lifter.
         /// Triggered when a liftable leave the lifter
         /// </summary>
-        event System.Action< int, int> LiftableLeftTheLifter;
+        event System.Action< int, int> LeaveEvent;
 
         /// <summary>
         /// First index is the Id of the liftable, second index is the if of the lifter.
         /// Triggered when a liftable land onf the lifter
         /// </summary>
-        event System.Action< int, int> LiftableLandOnLifter;
+        event System.Action< int, int> LandEvent;
     }
 }
