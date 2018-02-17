@@ -7,7 +7,7 @@ namespace Game.ECS.Engines.Lifter
     /// <summary>
     /// A Lifter for the Lifter collection engine
     /// </summary>
-    public class LifterCollectionView: EntityView
+    public class LifterParentView: EntityView
     {
         public ILifter              lifter;
         public ILifterLandingEvent  lifterLandingEvents;
@@ -16,7 +16,7 @@ namespace Game.ECS.Engines.Lifter
     /// <summary>
     /// A Liftable for the lifter collection engine
     /// </summary>
-    public class LiftableToCollectView: EntityView
+    public class LifterChildView: EntityView
     {
         public ILiftable            liftable;
     }
@@ -27,7 +27,7 @@ namespace Game.ECS.Engines.Lifter
     /// GameObjects to be really parents of each other. For simplicity we allow only a 2 level hierarchy,
     /// so we have either a lifter or unparanted liftable, or a lifter with some liftables inside.
     /// </summary>
-    public class LitferCollectionEngine : MultiEntityViewsEngine< LifterCollectionView, LiftableToCollectView>
+    public class LitferCollectionEngine : MultiEntityViewsEngine< LifterParentView, LifterChildView>
     {
         // Allow us to query for entities.
         public IEntityViewsDB entityViewsDB { private get; set; }
@@ -36,20 +36,25 @@ namespace Game.ECS.Engines.Lifter
         /// Register events for when a lifter is added to engines.
         /// </summary>
         /// <param name="entityView"></param>
-        protected override void Add( LifterCollectionView entityView)
+        protected override void Add( LifterParentView entityView)
         {
             entityView.lifterLandingEvents.LandEvent += LandEvent;
             entityView.lifterLandingEvents.LeaveEvent += LeaveEvent;
         }
 
         /// <summary>
-        /// Deregister events for when a lifter is added to engines
+        /// Deregister events for when a lifter is removed from engines
         /// </summary>
         /// <param name="entityView"></param>
-        protected override void Remove( LifterCollectionView entityView)
+        protected override void Remove( LifterParentView entityView)
         {
             entityView.lifterLandingEvents.LandEvent -= LandEvent;
             entityView.lifterLandingEvents.LeaveEvent -= LeaveEvent;
+
+            foreach( var child in entityView.lifter.CarriedThings)
+            {
+                child.Carrier = null;
+            }
         }
 
         /// <summary>
@@ -59,15 +64,15 @@ namespace Game.ECS.Engines.Lifter
         /// <param name="liftableID"></param>
         public void LandEvent( int lifterID, int liftableID)
         {
-            LifterCollectionView lifterView = entityViewsDB.QueryEntityView< LifterCollectionView>( lifterID);
-            LiftableToCollectView liftableVew = null;
+            LifterParentView lifterView = entityViewsDB.QueryEntityView< LifterParentView>( lifterID);
+            LifterChildView liftableVew = null;
 
             entityViewsDB.TryQueryEntityView( liftableID, out liftableVew);
 
-            LandEventImplementation( liftableVew.liftable, lifterView.lifter);
+            CreateParentRelationship( liftableVew.liftable, lifterView.lifter);
         }
 
-        public void LandEventImplementation( ILiftable liftable, ILifter lifter)
+        public void CreateParentRelationship( ILiftable liftable, ILifter lifter)
         {
             if (liftable != null)
                 liftable.Carrier = lifter;
@@ -82,23 +87,24 @@ namespace Game.ECS.Engines.Lifter
         /// <param name="liftableID"></param>
         public void LeaveEvent( int lifterID, int liftableID)
         {
-            LifterCollectionView lifterView = entityViewsDB.QueryEntityView< LifterCollectionView>( lifterID);
-            LiftableToCollectView liftableView = null;
+            LifterParentView lifterView = entityViewsDB.QueryEntityView< LifterParentView>( lifterID);
+            LifterChildView liftableView = null;
 
             entityViewsDB.TryQueryEntityView( liftableID, out liftableView);
 
-            LeaveEventImplementation( liftableView.liftable, lifterView.lifter);
+            RemoveParentRelationship( liftableView.liftable, lifterView.lifter);
         }
 
-        public void LeaveEventImplementation( ILiftable liftable, ILifter lifter)
+        public void RemoveParentRelationship( ILiftable liftable, ILifter lifter)
         {
             if (liftable != null)
+            {
                 liftable.Carrier = null;
-
-            lifter.CarriedThings.Remove( liftable);
+                lifter.CarriedThings.Remove( liftable);
+            }
         }
 
-        protected override void Add( LiftableToCollectView entityView)
+        protected override void Add( LifterChildView entityView)
         {
             entityView.liftable.Carrier = null;
         }
@@ -107,7 +113,7 @@ namespace Game.ECS.Engines.Lifter
         /// When a lifted object leaves the game we make sure to remove it also from the lifter
         /// </summary>
         /// <param name="entityView"></param>
-        protected override void Remove( LiftableToCollectView entityView)
+        protected override void Remove( LifterChildView entityView)
         {             
             if(entityView.liftable.Carrier != null)
             {
