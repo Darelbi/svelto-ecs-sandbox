@@ -13,7 +13,7 @@ namespace GameUnitTest
         void RunTest();
     }
 
-    public abstract class ECSUnitTest : MonoBehaviour
+    public abstract class ECSUnitTest : MonoBehaviour, IRunnableTest
     {
         /// <summary>
         /// Start the unit test.
