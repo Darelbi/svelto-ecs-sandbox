@@ -1,5 +1,4 @@
-﻿using Game.ECS.Components.Liftable;
-using Svelto.DataStructures;
+﻿using Svelto.DataStructures;
 
 /// <summary>
 /// Lifter components have to do with the movement of all the stuff that can carry liftable objects
@@ -9,7 +8,7 @@ namespace Game.ECS.Components.Lifter
 {
     public interface ILifter : IComponent
     {
-        FasterList< ILiftable> CarriedThings { get;}
+        FasterList< int> CarriedThings { get;}
     }
 
     public interface ILifterLandingEvent

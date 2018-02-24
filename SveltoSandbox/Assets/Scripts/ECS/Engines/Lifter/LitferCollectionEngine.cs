@@ -1,4 +1,5 @@
-﻿using Game.ECS.Components.Liftable;
+﻿using Game.ECS.Components;
+using Game.ECS.Components.Liftable;
 using Game.ECS.Components.Lifter;
 using Svelto.ECS;
 
@@ -19,6 +20,7 @@ namespace Game.ECS.Engines.Lifter
     public class LifterChildView: EntityView
     {
         public ILiftable            liftable;
+        public IIdentifier          identifer;
     }
 
     /// <summary>
@@ -53,7 +55,10 @@ namespace Game.ECS.Engines.Lifter
 
             foreach( var child in entityView.lifter.CarriedThings)
             {
-                child.Carrier = null;
+                LifterChildView liftableVew = null;
+
+                entityViewsDB.TryQueryEntityView( child, out liftableVew);
+                liftableVew.liftable.Carrier = -1;
             }
         }
 
@@ -67,17 +72,14 @@ namespace Game.ECS.Engines.Lifter
             LifterParentView lifterView = entityViewsDB.QueryEntityView< LifterParentView>( lifterID);
             LifterChildView liftableVew = null;
 
-            entityViewsDB.TryQueryEntityView( liftableID, out liftableVew);
-
-            CreateParentRelationship( liftableVew.liftable, lifterView.lifter);
+            if(entityViewsDB.TryQueryEntityView( liftableID, out liftableVew))
+                CreateParentRelationship( lifterView.lifter, liftableVew.liftable, lifterID, liftableID);
         }
 
-        public void CreateParentRelationship( ILiftable liftable, ILifter lifter)
+        public void CreateParentRelationship( ILifter lifter, ILiftable liftable, int lifterID, int liftableID)
         {
-            if (liftable != null)
-                liftable.Carrier = lifter;
-
-            lifter.CarriedThings.Add( liftable);
+            liftable.Carrier = lifterID;
+            lifter.CarriedThings.Add( liftableID);
         }
 
         /// <summary>
@@ -90,35 +92,33 @@ namespace Game.ECS.Engines.Lifter
             LifterParentView lifterView = entityViewsDB.QueryEntityView< LifterParentView>( lifterID);
             LifterChildView liftableView = null;
 
-            entityViewsDB.TryQueryEntityView( liftableID, out liftableView);
-
-            RemoveParentRelationship( liftableView.liftable, lifterView.lifter);
+            if(entityViewsDB.TryQueryEntityView( liftableID, out liftableView))
+                RemoveParentRelationship( lifterView.lifter, liftableView.liftable, liftableID);
         }
 
-        public void RemoveParentRelationship( ILiftable liftable, ILifter lifter)
+        public void RemoveParentRelationship( ILifter lifter, ILiftable liftable, int liftableID)
         {
-            if (liftable != null)
-            {
-                liftable.Carrier = null;
-                lifter.CarriedThings.Remove( liftable);
-            }
+            liftable.Carrier = -1;
+            lifter.CarriedThings.Remove( liftableID);
         }
 
         protected override void Add( LifterChildView entityView)
         {
-            entityView.liftable.Carrier = null;
+            entityView.liftable.Carrier = -1;
         }
 
         /// <summary>
         /// When a lifted object leaves the game we make sure to remove it also from the lifter
         /// </summary>
-        /// <param name="entityView"></param>
-        protected override void Remove( LifterChildView entityView)
-        {             
-            if(entityView.liftable.Carrier != null)
+        /// <param name="liftableView"></param>
+        protected override void Remove( LifterChildView liftableView)
+        {
+            LifterParentView lifterView = null;
+
+            if (entityViewsDB.TryQueryEntityView( liftableView.liftable.Carrier, out lifterView))
             {
-                entityView.liftable.Carrier.CarriedThings.Remove( entityView.liftable);
-                entityView.liftable.Carrier = null;
+                liftableView.liftable.Carrier = -1;
+                lifterView.lifter.CarriedThings.Remove( liftableView.identifer.Id);
             }
         }
     }

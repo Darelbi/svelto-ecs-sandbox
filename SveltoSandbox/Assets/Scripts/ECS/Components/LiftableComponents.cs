@@ -1,6 +1,4 @@
-﻿using Game.ECS.Components.Lifter;
-
-/// <summary>
+﻿/// <summary>
 /// Liftable components are all those components that can move freely in the space or can
 /// be carried inside space stations and space ships. A liftable object is typically 1 square size
 /// </summary>
@@ -11,6 +9,6 @@ namespace Game.ECS.Components.Liftable
     /// </summary>
     public interface ILiftable: IComponent
     {
-        ILifter Carrier { get; set; }
+        int Carrier { get; set; }
     }
 }

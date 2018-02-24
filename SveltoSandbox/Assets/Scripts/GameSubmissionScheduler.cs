@@ -16,7 +16,16 @@ namespace Game
         /// <returns>the enumerator for the task</returns>
         IEnumerator ScheduleTask();
 
+        /// <summary>
+        /// Called by svelto to inject the needed logic
+        /// </summary>
+        /// <param name="submitEntityViews"></param>
         void Schedule( WeakAction submitEntityViews);
+
+        /// <summary>
+        /// Used to call submission manually
+        /// </summary>
+        void SubmitNow();
     }
 
     /// <summary>

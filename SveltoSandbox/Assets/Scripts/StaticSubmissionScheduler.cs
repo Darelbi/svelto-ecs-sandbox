@@ -43,6 +43,12 @@ namespace Game
             // Scene unloaded
         }
 
+        public void SubmitNow()
+        {
+            // We don't want manual submission in game
+            throw new System.NotImplementedException("Manual submission during gameplay is not allowed");
+        }
+
         private WeakAction OnTick;
     }
 }
