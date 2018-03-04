@@ -1,4 +1,7 @@
-﻿using Kore.Coroutines;
+﻿using Game.ECS.Controllers;
+using Game.ECS.Engines.Lifter;
+using Game.ECS.Engines.Movement;
+using Kore.Coroutines;
 using Svelto.ECS;
 using Svelto.ECS.Schedulers;
 using System.Collections;
@@ -46,10 +49,7 @@ namespace Game
         {
             var enginesRoot = new EnginesRoot( GenerateMySubmissionScheduler());
 
-            SetupEngines( enginesRoot);
-
-            while (true)
-                yield return null;
+            return SetupEngines( enginesRoot);
         }
 
         /// <summary>
@@ -65,12 +65,47 @@ namespace Game
         /// <summary>
         /// Wire all the game logic and setup the engines
         /// </summary>
-        private void SetupEngines( EnginesRoot ecs)
+        private IEnumerator SetupEngines( EnginesRoot ecs)
         {
             IEntityFactory entityFactory = ecs.GenerateEntityFactory();
             IEntityFunctions entityFunctions = ecs.GenerateEntityFunctions();
 
-            //ecs.AddEngine( new Engine(blabla));
+            MovementScheduler movementPhaser = new MovementScheduler();
+            Sequencer landingEventResponseSequence = new Sequencer();
+
+            var lifterCollection = new LifterCollectionEngine();
+            var lifterMovement = new LifterMovementEngine( movementPhaser);
+            var movingPosition = new MovingPositionEngine( movementPhaser);
+            var lifterSnap = new AnyLifterSnapEngine( movementPhaser, landingEventResponseSequence);
+
+            ecs.AddEngine( lifterCollection);
+            ecs.AddEngine( lifterMovement);
+            ecs.AddEngine( movingPosition);            
+
+            // a sequence is just a set of "labels" each label can be triggered by the owning engine
+            // and cause the listed engines to receive the messages.
+            landingEventResponseSequence.SetSequence
+            (
+                new Steps
+                {
+                    {// LABEL
+                        // owning engine
+                        lifterSnap, // when lifterSnap calls "next" the message is delivered "To"...
+
+                        //listed engines
+                        new To
+                        {
+                            lifterCollection //.. lifterCollection
+                        }
+                    }
+                }
+            );
+
+            while( true)
+            {
+                movementPhaser.ScheduleMovement();
+                yield return null;
+            }
         }
     }
 }

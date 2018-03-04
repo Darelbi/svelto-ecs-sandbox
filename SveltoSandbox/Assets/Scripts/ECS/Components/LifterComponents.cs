@@ -11,18 +11,10 @@ namespace Game.ECS.Components.Lifter
         FasterList< int> CarriedThings { get;}
     }
 
-    public interface ILifterLandingEvent
+    public struct LifterLandingEvent
     {
-        /// <summary>
-        /// First index is the Id of the liftable, second index is the if of the lifter.
-        /// Triggered when a liftable leave the lifter
-        /// </summary>
-        event System.Action< int, int> LeaveEvent;
-
-        /// <summary>
-        /// First index is the Id of the liftable, second index is the if of the lifter.
-        /// Triggered when a liftable land onf the lifter
-        /// </summary>
-        event System.Action< int, int> LandEvent;
+        public int LifterID { get; set; }
+        public int LiftableID { get; set; }
+        public bool Landed { get; set; }
     }
 }

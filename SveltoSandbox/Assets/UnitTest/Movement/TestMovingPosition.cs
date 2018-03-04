@@ -1,11 +1,8 @@
-﻿using Game.ECS.Engines.Movement;
-using Game.ECS.Components.Movement;
+﻿using Game.ECS.Components.Movement;
+using Game.ECS.Engines.Movement;
+using GameUnitTest.Controllers;
 using Svelto.ECS;
-using Svelto.ECS.Schedulers;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
 
 namespace GameUnitTest.Movement
 {
@@ -26,7 +23,7 @@ namespace GameUnitTest.Movement
 
         public override void SetupEngines( EnginesRoot enginesRoot, IEntityFactory factory, IEntityFunctions functions)
         {
-            engine = new MovingPositionEngine();
+            engine = new MovingPositionEngine( new MockedMovementScheduler());
             enginesRoot.AddEngine( engine);
         }
 
@@ -38,7 +35,7 @@ namespace GameUnitTest.Movement
         public override void SetupEntities( IEntityFactory factory, IEntityFunctions functions)
         {
             //create the "stub implementor" (note this could actually be used already in gameplay,
-            // but never mix testing stuff inside gamempla)
+            // but never mix testing stuff inside gamemplay)
 
             stub = new MovingPositionStub
             {
@@ -47,6 +44,11 @@ namespace GameUnitTest.Movement
             };
 
             factory.BuildEntity< MovingPositionStubber>( 1, new object[] { stub });
+        }
+
+        public override void CheckPreconditions()
+        {
+
         }
 
         public override void DoStuff()
@@ -66,3 +68,4 @@ namespace GameUnitTest.Movement
         }
     }
 }
+

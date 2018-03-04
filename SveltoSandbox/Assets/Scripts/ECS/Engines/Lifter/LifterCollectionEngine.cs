@@ -11,7 +11,6 @@ namespace Game.ECS.Engines.Lifter
     public class LifterParentView: EntityView
     {
         public ILifter              lifter;
-        public ILifterLandingEvent  lifterLandingEvents;
     }
 
     /// <summary>
@@ -29,30 +28,22 @@ namespace Game.ECS.Engines.Lifter
     /// GameObjects to be really parents of each other. For simplicity we allow only a 2 level hierarchy,
     /// so we have either a lifter or unparanted liftable, or a lifter with some liftables inside.
     /// </summary>
-    public class LitferCollectionEngine : MultiEntityViewsEngine< LifterParentView, LifterChildView>
+    public class LifterCollectionEngine : MultiEntityViewsEngine< LifterParentView, LifterChildView>
+        , IQueryingEntityViewEngine, IStep< LifterLandingEvent>
     {
         // Allow us to query for entities.
         public IEntityViewsDB entityViewsDB { private get; set; }
 
-        /// <summary>
-        /// Register events for when a lifter is added to engines.
-        /// </summary>
-        /// <param name="entityView"></param>
-        protected override void Add( LifterParentView entityView)
-        {
-            entityView.lifterLandingEvents.LandEvent += LandEvent;
-            entityView.lifterLandingEvents.LeaveEvent += LeaveEvent;
-        }
+        public void Ready() {   }
+
+        protected override void Add( LifterParentView entityView) {   }
 
         /// <summary>
-        /// Deregister events for when a lifter is removed from engines
+        /// when lifter dies, leave all children
         /// </summary>
-        /// <param name="entityView"></param>
+        /// <param name="entityView">lifter removed from engine</param>
         protected override void Remove( LifterParentView entityView)
         {
-            entityView.lifterLandingEvents.LandEvent -= LandEvent;
-            entityView.lifterLandingEvents.LeaveEvent -= LeaveEvent;
-
             foreach( var child in entityView.lifter.CarriedThings)
             {
                 LifterChildView liftableVew = null;
@@ -120,6 +111,19 @@ namespace Game.ECS.Engines.Lifter
                 liftableView.liftable.Carrier = -1;
                 lifterView.lifter.CarriedThings.Remove( liftableView.identifer.Id);
             }
+        }
+
+        /// <summary>
+        /// The step is triggered in response to another event
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="condition"></param>
+        public void Step( ref LifterLandingEvent token, int condition)
+        {
+            if (token.Landed)
+                LandEvent( token.LifterID, token.LiftableID);
+            else
+                LeaveEvent( token.LifterID, token.LiftableID);
         }
     }
 }

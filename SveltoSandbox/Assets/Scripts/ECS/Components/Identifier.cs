@@ -1,6 +1,4 @@
-﻿
-
-namespace Game.ECS.Components
+﻿namespace Game.ECS.Components
 {
     public interface IIdentifier: IComponent
     {

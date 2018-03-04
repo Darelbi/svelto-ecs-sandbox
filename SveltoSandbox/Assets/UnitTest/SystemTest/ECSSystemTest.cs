@@ -2,18 +2,12 @@
 using Svelto.ECS;
 using Svelto.ECS.Schedulers;
 using UnityEngine;
+using System.Collections;
+using Kore.Coroutines;
 
-namespace GameUnitTest
+namespace GameUnitTest.SystemTest
 {
-    /// <summary>
-    /// If later we want a single test runner we can search for all behaviours with this interface
-    /// </summary>
-    public interface IRunnableTest
-    {
-        void RunTest();
-    }
-
-    public abstract class ECSUnitTest : MonoBehaviour, IRunnableTest
+    public abstract class ECSSystemTest : MonoBehaviour, IRunnableTest
     {
         /// <summary>
         /// Start the unit test.
@@ -25,10 +19,8 @@ namespace GameUnitTest
 
         private EntitySubmissionScheduler GenerateMySubmissionScheduler()
         {
-            // Here we use a different submission scheduler to make testing easy
             return new GameSubmissionScheduler(
-                scheduler = 
-                new InstantSubmissionScheduler());
+                (ISubmissionScheduler) StaticSubmissionScheduler.Instance);
         }
 
         ISubmissionScheduler scheduler;
@@ -44,31 +36,22 @@ namespace GameUnitTest
 
             SetupEntities( entityFactory, entityFunctions);
 
-            Tick();
-            CheckPreconditions();
-
-            Tick();
-            DoStuff();
-
-            Tick();
-            CheckPostconditions();
+            StartCoroutine( UpdateTest());
         }
 
-        public void Tick()
+        public IEnumerator UpdateTest()
         {
-            //as you see, you don't even need a game loop for testing stuff (at least for
-            // testing stuff that is totally independent of unity3D)
-            scheduler.SubmitNow();
+            while (true)
+            {
+                yield return null;
+                Update();
+            }
         }
+
+        public abstract void Update();
 
         public abstract void SetupEngines( EnginesRoot enginesRoot, IEntityFactory factory, IEntityFunctions functions);
 
         public abstract void SetupEntities( IEntityFactory factory, IEntityFunctions functions);
-
-        public abstract void CheckPreconditions();
-
-        public abstract void DoStuff();
-
-        public abstract void CheckPostconditions();
     }
 }

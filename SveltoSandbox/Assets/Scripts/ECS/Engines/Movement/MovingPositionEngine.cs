@@ -1,4 +1,5 @@
 ﻿using Game.ECS.Components.Movement;
+using Game.ECS.Controllers;
 using Svelto.ECS;
 using UnityEngine;
 
@@ -20,17 +21,29 @@ namespace Game.ECS.Engines.Movement
     /// <summary>
     /// This engine is responsible for transmitting movement of a lifter to all the carried things
     /// </summary>
-    public class MovingPositionEngine : IQueryingEntityViewEngine
+    public class MovingPositionEngine : IQueryingEntityViewEngine, IMovementEngine
     {
+        private readonly IMovementScheduler movement;
+
+        public MovingPositionEngine( IMovementScheduler movement)
+        {
+            this.movement = movement;
+        }
+
+        public void Ready()
+        {
+            movement.RegisterMovementEngine( MovementPhase.UpdatePosition, this);
+        }
+
+        public void ExecuteMovementPhase()
+        {
+            ApplyMovement();
+        }
+
         // Allow us to query for entities.
         public IEntityViewsDB entityViewsDB { private get; set; }
 
         public readonly Vector2 Zero = Vector2.zero;
-
-        public void Ready()
-        {
-
-        }
 
         public void ApplyMovement()
         {
